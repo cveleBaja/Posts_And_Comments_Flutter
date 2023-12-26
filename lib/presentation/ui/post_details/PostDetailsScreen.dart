@@ -13,10 +13,8 @@ class PostDetailsScreen extends StatefulWidget {
 }
 
 class _PostDetailsScreenState extends State<PostDetailsScreen> {
-
   final postDetailsViewModel =
-  PostDetailsViewModel(repository: DependencyInjection.postsRepository);
-  Post? _post;
+      PostDetailsViewModel(repository: DependencyInjection.postsRepository);
 
   @override
   void initState() {
@@ -25,14 +23,7 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
   }
 
   Future<void> _getPost() async {
-    try {
-      final post = await postDetailsViewModel.getPost(widget.postId);
-      setState(() {
-        _post = post;
-      });
-    } catch (e) {
-      // Log error
-    }
+    await postDetailsViewModel.getPost(widget.postId);
   }
 
   @override
@@ -41,21 +32,40 @@ class _PostDetailsScreenState extends State<PostDetailsScreen> {
       appBar: AppBar(
         title: const Text('Post Details'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Title: ${_post?.title ?? ""}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: StreamBuilder<Post>(
+        stream: postDetailsViewModel.postStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
+
+          if (!snapshot.hasData) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final post = snapshot.data;
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Title: ${post?.title ?? ""}',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text('Body: ${post?.body ?? ""}'),
+                const SizedBox(height: 16),
+                // Add more details as needed
+              ],
             ),
-            const SizedBox(height: 8),
-            Text('Body: ${_post?.body ?? ""}'),
-            const SizedBox(height: 16),
-            // Add more details as needed
-          ],
-        ),
+          );
+        },
       ),
     );
   }

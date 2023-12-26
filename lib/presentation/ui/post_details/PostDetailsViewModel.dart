@@ -6,13 +6,17 @@ class PostDetailsViewModel {
 
   final PostsRepository _repository;
 
+  final StreamController<Post> _postController = StreamController<Post>();
+  Stream<Post> get postStream => _postController.stream;
+
   PostDetailsViewModel({required PostsRepository repository}) : _repository = repository;
 
-  Future<Post> getPost(int id) async {
+  Future<void> getPost(int id) async {
     try {
-      return await _repository.getPost(id);
+      final post = await _repository.getPost(id);
+      _postController.add(post);
     } catch (e) {
-      rethrow;
+      _postController.addError(e);
     }
   }
 }

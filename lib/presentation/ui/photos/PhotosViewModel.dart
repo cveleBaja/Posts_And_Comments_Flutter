@@ -1,5 +1,6 @@
 import 'package:post_and_comments/domain/repository/PhotosRepository.dart';
 import 'package:post_and_comments/domain/model/Photo.dart';
+import 'dart:async';
 
 class PhotosViewModel {
 
@@ -8,18 +9,23 @@ class PhotosViewModel {
   int _currentPage = 1;
   int _limit = 10;
   bool _maxReached = false;
+  List<Photo> _allPhotos = [];
+
+  final StreamController<List<Photo>> _photosController = StreamController<List<Photo>>();
+  Stream<List<Photo>> get photosStream => _photosController.stream;
 
   PhotosViewModel({required PhotosRepository repository}) : _repository = repository;
 
-  Future<List<Photo>> getPhotos() async {
+  Future<void> getPhotos() async {
     try {
       final photos = await _repository.getPhotos(page: _currentPage, limit: _limit);
       _maxReached = photos.isEmpty;
       _currentPage++;
 
-      return photos;
+      _allPhotos.addAll(photos);
+      _photosController.add(_allPhotos);
     } catch (e) {
-      throw e;
+      _photosController.addError(e);
     }
   }
 
